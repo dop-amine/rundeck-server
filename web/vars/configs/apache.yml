@@ -1,0 +1,20 @@
+---
+apache_config: |
+  <VirtualHost *:80>
+    ServerName {{ host_name }}
+
+    RewriteEngine on
+    RewriteRule ^ https://%{SERVER_NAME}%{REQUEST_URI} [END,QSA,R=permanent]
+  </VirtualHost>
+  <VirtualHost *:443>
+    ServerName {{ host_name }}
+    DocumentRoot /var/www/{{ app }}/public
+
+    SSLCertificateFile          /etc/letsencrypt/live/{{ host_name }}/fullchain.pem
+    SSLCertificateKeyFile       /etc/letsencrypt/live/{{ host_name }}/privkey.pem
+
+    <Directory /var/www/{{ app }}/public>
+      AllowOverride All
+      php_flag display_errors Off
+    </Directory>
+  </VirtualHost>

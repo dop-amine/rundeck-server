@@ -1,0 +1,112 @@
+---
+- name: Include apache config vars
+  include_vars:
+    file: vars/configs/apache/apache.yml
+
+- name: Remove default apache2 package
+  apt:
+    name: ['apache2=2.4.29-1ubuntu4.11', 'apache2=2.4.29-1ubuntu4']
+    state: absent
+
+- name: Add updated apache2 ppa
+  apt_repository:
+    repo: ppa:ondrej/apache2
+    state: present
+
+- name: Update cache
+  apt:
+    update_cache: yes
+
+- name: Install updated apache2 version
+  apt:
+    name: apache2
+    state: present
+
+- name: Install passenger dependencies
+  apt:
+    name: "{{ packages }}"
+    state: present
+  vars:
+    packages:
+      - dirmngr
+      - gnupg
+      - apt-transport-https
+      - ca-certificates
+
+- name: Add passenger apt key
+  apt_key:
+    keyserver: hkp://keyserver.ubuntu.com:80
+    id: 561F9B9CAC40B2F7
+    state: present
+
+- name: Add apt http capabilities
+  apt: name=apt-transport-https state=present
+
+- name: Add Phusion apt repo
+  apt_repository:
+    repo: 'deb https://oss-binaries.phusionpassenger.com/apt/passenger {{ ansible_distribution_release }} main'
+    state: present
+    update_cache: true
+
+- name: Install apache and passenger
+  apt:
+    name: "{{ packages }}"
+    state: present
+  vars:
+    packages:
+      - passenger
+      - libapache2-mod-passenger
+      - apache2
+      - apache2-utils
+
+- name: Remove default html folder
+  file:
+    dest: /var/www/html
+    state: absent
+
+- name: Disable default site
+  shell: a2dissite 000-default
+
+- name: Enable rewrite module
+  apache2_module:
+    name: rewrite
+    state: present
+
+- name: Enable passenger module
+  apache2_module:
+    name: passenger
+    state: present
+
+- name: Disable server signature
+  replace:
+    path: /etc/apache2/conf-enabled/security.conf
+    regexp: 'ServerSignature On'
+    replace: "ServerSignature Off"
+
+- name: Change server tokens version
+  replace:
+    path: /etc/apache2/conf-enabled/security.conf
+    regexp: 'ServerTokens OS'
+    replace: "ServerTokens Prod"
+
+- name: Disable TLS
+  replace:
+    path: /etc/apache2/mods-available/ssl.conf
+    regexp: 'SSLProtocol all -SSLv3\n'
+    replace: "SSLProtocol all -SSLv3 -TLSv1"
+
+- name: Enable ssl module
+  apache2_module:
+    name: ssl
+    state: present
+
+- name: Reload apache
+  service:
+    name: apache2
+    state: reloaded
+
+- name: Change permissions of apache log dir
+  file:
+    dest: /var/log/apache2
+    state: directory
+    mode: 0755

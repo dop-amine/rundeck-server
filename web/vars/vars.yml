@@ -1,0 +1,19 @@
+---
+# AWS
+instance_name:
+host_name:
+termination_protection: yes
+key_pair:
+operating_system: Ubuntu 18.04 LTS
+ami_id: ami-0a313d6098716f372
+region: us-east-1
+ec2_volume_size: 20
+type: t3.small
+subnet_id:
+group:
+count: 1
+awscli_profile: default
+
+# OS
+username: deploy
+app:

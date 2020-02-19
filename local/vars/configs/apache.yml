@@ -1,0 +1,7 @@
+---
+apache_config: |
+  <VirtualHost *:443>
+    ServerName 192.168.0.42
+
+    DocumentRoot "/var/www/vhosts/{{ app }}/public"
+  </VirtualHost>
